@@ -1,35 +1,52 @@
 {
   "manifest_version": 3,
-  "name": "Trello GPT Automator",
+  "name": "Fazedora - Trello GPT Automator",
   "version": "1.0",
-  "description": "Automatiza a coleta de dados do Trello para o ChatGPT.",
+  "description": "Automatiza a extração de dados do Trello, envio para ChatGPT e configuração do site do cliente.",
+
   "permissions": [
     "tabs",
     "storage",
     "downloads",
     "clipboardRead",
-    "clipboardWrite"
+    "clipboardWrite",
+    "scripting",
+    "activeTab"
   ],
+
   "host_permissions": [
     "https://trello.com/*",
-    "https://chatgpt.com/*"
+    "https://chatgpt.com/*",
+    "<all_urls>"
   ],
+
+  "action": {
+    "default_title": "Fazedora",
+    "default_popup": "popup.html"
+  },
+
   "background": {
     "service_worker": "background.js"
   },
+
   "content_scripts": [
     {
-      "matches": ["https://trello.com/b/*"],
-      "js": ["content_trello.js"]
+      "matches": ["https://trello.com/*"],
+      "js": ["content_trello.js"],
+      "run_at": "document_idle"
     },
     {
       "matches": ["https://chatgpt.com/*"],
-      "js": ["content_chatgpt.js"]
+      "js": ["content_chatgpt.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_site.js"],
+      "run_at": "document_idle"
     }
   ],
-  "action": {
-    "default_title": "Iniciar Automação"
-  },
+
   "web_accessible_resources": [
     {
       "resources": ["pr1.txt", "pr2.txt"],

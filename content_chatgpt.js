@@ -164,7 +164,16 @@ async function startChatGPTAutomation() {
     }
 }
 
-// Aguarda a página carregar completamente antes de iniciar
+// Escuta comandos do popup para teste isolado da Fase 2
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "start_chatgpt_automation") {
+        console.log("[ChatGPT Automator] Comando recebido do popup!");
+        startChatGPTAutomation();
+        sendResponse({ status: "started" });
+    }
+});
+
+// Auto-execução ao abrir a aba (acionado pelo fluxo do Trello)
 window.addEventListener('load', () => {
     console.log("[ChatGPT Automator] Página carregada. Iniciando em 3s...");
     setTimeout(startChatGPTAutomation, 3000);
