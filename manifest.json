@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Trello GPT Automator",
+  "version": "1.0",
+  "description": "Automatiza a coleta de dados do Trello para o ChatGPT.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://trello.com/*",
+    "https://chatgpt.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://trello.com/b/*"],
+      "js": ["content_trello.js"]
+    },
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content_chatgpt.js"]
+    }
+  ],
+  "action": {
+    "default_title": "Iniciar Automação"
+  }
+}
