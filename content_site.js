@@ -40,15 +40,11 @@ function simulateKey(key, count = 1) {
     }
 }
 
-async function handleEditor() {
-    console.log("[Site Automator] Editor detectado! Iniciando fluxo...");
-    const stored = await chrome.storage.local.get(['chatgptResults']);
-    if (!stored.chatgptResults) {
-        console.error("Dados do ChatGPT não encontrados no storage.");
-        return;
-    }
-    const { csv1, csv2, texto_inst } = stored.chatgptResults;
+async function handleEditorInit() {
+    const flags = await chrome.storage.local.get(['editorInitDone']);
+    if (flags.editorInitDone) return; // Evita rodar duas vezes automaticamente
 
+    console.log("[Site Automator] Editor Detectado. Carregando template...");
     await wait(3000);
 
     // 0. Carregar o template
@@ -56,7 +52,19 @@ async function handleEditor() {
     const templateUrl = 'https://m3rsistemas.com.br/projetocontroler/templates/psiversion.txt';
     await executeInMainWorld(`if(typeof newtemplate === 'function') newtemplate('${templateUrl}');`);
     console.log("[0/6] Aguardando template carregar...");
+    
+    await chrome.storage.local.set({ editorInitDone: true });
     await wait(5000);
+}
+
+async function handleEditorPasteSequence() {
+    console.log("[Site Automator] Iniciando Sequência de Colagem...");
+    const stored = await chrome.storage.local.get(['chatgptResults']);
+    if (!stored.chatgptResults) {
+        console.error("Dados do ChatGPT não encontrados no storage.");
+        return;
+    }
+    const { csv1, csv2, texto_inst } = stored.chatgptResults;
 
     // 1. Configuração Inicial
     console.log("[1/6] varrerClasses...");
@@ -68,21 +76,26 @@ async function handleEditor() {
 
     // 2. CSV 1
     console.log("[2/6] Inserindo CSV 1...");
-    for (let i = 0; i < 2; i++) {
-        const next = document.activeElement?.nextElementSibling || document.querySelector('input, textarea, [contenteditable]');
-        if (next) next.focus();
-        await wait(300);
+    let csvInput = document.querySelector('textarea, input[type="text"]'); 
+    if (!csvInput || csvInput.value !== "") {
+        for (let i = 0; i < 2; i++) {
+            const next = document.activeElement?.nextElementSibling || document.querySelector('input, textarea, [contenteditable]');
+            if (next) next.focus();
+            await wait(400);
+        }
+        csvInput = document.activeElement;
     }
-    if (document.activeElement) {
-        document.activeElement.value = csv1;
-        document.activeElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+    if (csvInput) {
+        csvInput.value = csv1;
+        csvInput.dispatchEvent(new Event('input', { bubbles: true }));
+        csvInput.dispatchEvent(new Event('change', { bubbles: true }));
+        csvInput.dispatchEvent(new Event('blur', { bubbles: true }));
     }
-    await wait(1000);
+    await wait(1500);
     console.log("[2/6] processarCSVManual...");
     await executeInMainWorld('if(typeof processarCSVManual === "function") processarCSVManual();');
-    await wait(1000);
-    simulateKey('Enter');
-    await wait(3000);
+    await wait(2000);
 
     // 3. Bloco Klick e Limpeza
     console.log("[3/6] editorm3r klickblock...");
@@ -90,10 +103,9 @@ async function handleEditor() {
     await wait(3000);
 
     const delButtons = document.querySelectorAll('.m3r_itm_del');
-    console.log(`[3/6] Encontrados ${delButtons.length} botões de delete.`);
     for (const btn of delButtons) {
         btn.click();
-        await wait(1000);
+        await wait(1200);
     }
     await wait(1500);
 
@@ -101,21 +113,20 @@ async function handleEditor() {
     console.log("[4/6] Inserindo CSV 2...");
     const uploadBtn = document.querySelector('#card_csv_upload');
     if (uploadBtn) uploadBtn.click();
-    await wait(2000);
+    await wait(2500);
 
     const csvArea = document.querySelector('#csvTextarea');
     if (csvArea) {
         csvArea.focus();
         csvArea.value = csv2;
         csvArea.dispatchEvent(new Event('input', { bubbles: true }));
+        csvArea.dispatchEvent(new Event('change', { bubbles: true }));
     }
-    await wait(1000);
+    await wait(1500);
     const importBtn = document.querySelector('#importCsvBtn');
     if (importBtn) importBtn.click();
-    await wait(2000);
+    await wait(3000);
 
-    // Fechar menu
-    console.log("[4/6] Fechando menu...");
     const fechar = document.querySelector('.fecharmenu');
     if (fechar) fechar.click();
     await wait(2000);
@@ -125,42 +136,38 @@ async function handleEditor() {
     await executeInMainWorld("editorm3r('texto521335283732795a98031030841022');");
     await wait(3000);
 
-    // Procura o iframe do TinyMCE (pa1_ifr até pa10_ifr)
-    let tinyDoc = null;
-    for (let i = 1; i <= 10; i++) {
-        const ifr = document.getElementById(`pa${i}_ifr`);
-        if (ifr && ifr.contentDocument) {
-            tinyDoc = ifr.contentDocument;
-            console.log(`[5/6] Iframe pa${i}_ifr encontrado!`);
-            break;
-        }
-    }
-
-    if (tinyDoc) {
-        const tinyBody = tinyDoc.getElementById('tinymce');
-        if (tinyBody) {
-            tinyBody.innerHTML = texto_inst.replace(/\n/g, '<br>');
-            console.log("[5/6] Texto institucional inserido no TinyMCE.");
-        }
-    } else {
-        console.error("[5/6] Iframe do TinyMCE não encontrado.");
-    }
+    const textToInsert = (texto_inst || "").replace(/\n/g, '<br>');
+    await executeInMainWorld(`
+        (function() {
+            try {
+                var editor = (typeof tinymce !== 'undefined') ? tinymce.activeEditor : null;
+                if (!editor) {
+                    for (var i = 1; i <= 10; i++) {
+                        if (typeof tinymce !== 'undefined' && tinymce.get('pa' + i)) {
+                            editor = tinymce.get('pa' + i);
+                            break;
+                        }
+                    }
+                }
+                if (editor) {
+                    editor.setContent(\`${textToInsert}\`);
+                    editor.undoManager.add();
+                    editor.setDirty(true);
+                }
+            } catch(e) { console.error(e); }
+        })();
+    `);
 
     await wait(2000);
-    console.log("[6/6] Fechando menu final...");
     const fecharFim = document.querySelector('.fecharmenu');
     if (fecharFim) fecharFim.click();
 
-    console.log("=== AUTOMAÇÃO CONCLUÍDA COM SUCESSO! ===");
+    console.log("=== COLAGEM CONCLUÍDA! ===");
 }
 
 async function startSiteAutomation() {
-    // Só roda se a extensão estiver ativada
     const flags = await chrome.storage.local.get(['fazedoraActive']);
-    if (!flags.fazedoraActive) {
-        console.log("[Site Automator] Extensão desativada. Ignorando.");
-        return;
-    }
+    if (!flags.fazedoraActive) return;
 
     const url = window.location.href;
     const stored = await chrome.storage.local.get(['trelloData']);
@@ -173,13 +180,17 @@ async function startSiteAutomation() {
     } else if (url.includes('/painel/my-pages/')) {
         await handlePanel();
     } else if (url.includes('/projetocontroler/editor/')) {
-        await handleEditor();
+        await handleEditorInit(); // Apenas o Template por padrão
     }
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "start_site_automation") {
         startSiteAutomation();
+        sendResponse({ status: "started" });
+    }
+    if (request.action === "start_site_sequence") {
+        handleEditorPasteSequence();
         sendResponse({ status: "started" });
     }
 });

@@ -50,47 +50,47 @@ async function sendToContent(action, tabId) {
     });
 }
 
-// Fase 1: Trello
-document.getElementById('btn-fase1').addEventListener('click', async () => {
+// 1. Trello -> ChatGPT
+document.getElementById('btn-trello-gpt').addEventListener('click', async () => {
     const tab = await getActiveTab();
     if (!tab.url.includes('trello.com')) {
         setStatus('❌ Abra o Trello primeiro!', 'error'); return;
     }
-    setStatus('⏳ Fase 1: Coletando dados do Trello...', 'running');
+    setStatus('⏳ Fase 1: Coletando Trello -> ChatGPT...', 'running');
     const res = await sendToContent('start_trello_automation', tab.id);
     if (res.error) setStatus('❌ Erro: ' + res.error, 'error');
-    else setStatus('✅ Fase 1 iniciada! Veja o console do Trello.', 'success');
+    else setStatus('✅ Coleta iniciada!', 'success');
 });
 
-// Fase 2: ChatGPT
-document.getElementById('btn-fase2').addEventListener('click', async () => {
+// 2. ChatGPT -> Site
+document.getElementById('btn-gpt-site').addEventListener('click', async () => {
     const tab = await getActiveTab();
     if (!tab.url.includes('chatgpt.com')) {
-        setStatus('❌ Abra o ChatGPT primeiro!', 'error'); return;
+        setStatus('❌ Abra o ChatGPT com as respostas!', 'error'); return;
     }
-    setStatus('⏳ Fase 2: Iniciando sequência no ChatGPT...', 'running');
-    const res = await sendToContent('start_chatgpt_automation', tab.id);
+    setStatus('⏳ Fase 2: Extraindo dados e abrindo site...', 'running');
+    const res = await sendToContent('extract_gpt_and_open_site', tab.id);
     if (res.error) setStatus('❌ Erro: ' + res.error, 'error');
-    else setStatus('✅ Fase 2 iniciada! Veja o console do ChatGPT.', 'success');
+    else setStatus('✅ Dados salvos! Abrindo site...', 'success');
 });
 
-// Fase 3: Site do cliente
-document.getElementById('btn-fase3').addEventListener('click', async () => {
+// 3. Site -> Paste
+document.getElementById('btn-site-paste').addEventListener('click', async () => {
     const tab = await getActiveTab();
-    setStatus('⏳ Fase 3: Ativando automação no site do cliente...', 'running');
-    const res = await sendToContent('start_site_automation', tab.id);
+    setStatus('⏳ Fase 3: Iniciando colagem no site...', 'running');
+    const res = await sendToContent('start_site_sequence', tab.id);
     if (res.error) setStatus('❌ Erro: ' + res.error, 'error');
-    else setStatus('✅ Fase 3 iniciada! Veja o console do site.', 'success');
+    else setStatus('✅ Sequência iniciada no editor!', 'success');
 });
 
 // Executar Tudo
 document.getElementById('btn-all').addEventListener('click', async () => {
     const tab = await getActiveTab();
     if (!tab.url.includes('trello.com')) {
-        setStatus('❌ Abra o Trello primeiro para executar tudo!', 'error'); return;
+        setStatus('❌ Comece pelo Trello!', 'error'); return;
     }
-    setStatus('⏳ Iniciando fluxo completo...', 'running');
+    setStatus('⏳ Iniciando processo completo...', 'running');
     const res = await sendToContent('start_trello_automation', tab.id);
-    if (res.error) setStatus('❌ Erro ao iniciar: ' + res.error, 'error');
-    else setStatus('✅ Fluxo completo iniciado! Acompanhe o console.', 'success');
+    if (res.error) setStatus('❌ Erro: ' + res.error, 'error');
+    else setStatus('✅ Processo completo iniciado!', 'success');
 });

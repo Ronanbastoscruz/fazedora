@@ -148,9 +148,42 @@ async function startChatGPTAutomation() {
     chrome.runtime.sendMessage({ action: "open_site_login", domain: domain });
 }
 
+async function extractAndRedirect() {
+    console.log("[ChatGPT] Extraindo dados finais e redirecionando...");
+    const currentResponses = Array.from(document.querySelectorAll('.markdown.prose'));
+    if (currentResponses.length === 0) {
+        console.error("Nenhuma resposta encontrada para extrair.");
+        return;
+    }
+
+    const allResponsesText = currentResponses.map(el => el.innerText).join('\n---\n');
+    
+    // Extrai usando os marcadores
+    const csv1 = extractData(allResponsesText, "[[[CSV1_START]]]", "[[[CSV1_END]]]");
+    const texto_inst = extractData(allResponsesText, "[[[TEXT_START]]]", "[[[TEXT_END]]]");
+    
+    // Procura o CSV2 (geralmente na última resposta)
+    const lastResponseText = currentResponses[currentResponses.length - 1].innerText;
+    const csv2 = extractData(lastResponseText, "[[[CSV2_START]]]", "[[[CSV2_END]]]");
+
+    console.log("[ChatGPT] Dados extraídos. Salvando...");
+    await chrome.storage.local.set({ 
+        chatgptResults: { csv1, csv2, texto_inst } 
+    });
+
+    const result = await chrome.storage.local.get(['trelloData']);
+    const domain = result.trelloData?.domain || "";
+    
+    chrome.runtime.sendMessage({ action: "open_site_login", domain: domain });
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "start_chatgpt_automation") {
         startChatGPTAutomation();
+        sendResponse({ status: "started" });
+    }
+    if (request.action === "extract_gpt_and_open_site") {
+        extractAndRedirect();
         sendResponse({ status: "started" });
     }
 });

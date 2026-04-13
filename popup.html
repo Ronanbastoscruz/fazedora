@@ -172,21 +172,23 @@
 
 <div class="status-box" id="status">Pronto para iniciar.</div>
 
-<button class="btn-all" id="btn-all">▶ Executar Tudo</button>
-
-<div class="section-label">Testar por Fase</div>
+<div class="section-label">Controle por Blocos</div>
 
 <div class="btn-grid">
-  <button class="btn-phase" id="btn-fase1">
-    <span class="badge">1</span> Trello → Coletar Dados
+  <button class="btn-phase" id="btn-trello-gpt">
+    <span class="badge">1</span> Trello → Coletar e Enviar ChatGPT
   </button>
-  <button class="btn-phase" id="btn-fase2">
-    <span class="badge">2</span> ChatGPT → Enviar e Processar
+  <button class="btn-phase" id="btn-gpt-site">
+    <span class="badge">2</span> ChatGPT → Abrir Site e Carregar Modelo
   </button>
-  <button class="btn-phase" id="btn-fase3">
-    <span class="badge">3</span> Site → Login e Editor
+  <button class="btn-phase" id="btn-site-paste">
+    <span class="badge">3</span> Site → Colar Informações (CSV/Texto)
   </button>
 </div>
+
+<div class="divider"></div>
+
+<button class="btn-all" id="btn-all">▶ Executar Tudo (Ponta a Ponta)</button>
 
 <script src="popup.js"></script>
 </body>
