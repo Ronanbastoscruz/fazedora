@@ -26,6 +26,13 @@ async function waitForSelectorAll(selector, minCount = 2, timeout = 30000) {
 }
 
 async function startAutomation() {
+    // Só roda se a extensão estiver ativada
+    const flags = await chrome.storage.local.get(['fazedoraActive']);
+    if (!flags.fazedoraActive) {
+        console.log("[Trello Automator] Extensão desativada. Ignorando.");
+        return;
+    }
+
     console.log("[1/6] Aguardando colunas do Trello carregarem...");
 
     // 1. Encontrar a 2ª coluna

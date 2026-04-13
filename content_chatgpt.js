@@ -84,6 +84,13 @@ function extractData(text, startTag, endTag) {
 }
 
 async function startChatGPTAutomation() {
+    // Só roda se a extensão estiver ativada
+    const flags = await chrome.storage.local.get(['fazedoraActive']);
+    if (!flags.fazedoraActive) {
+        console.log("[ChatGPT Automator] Extensão desativada. Ignorando.");
+        return;
+    }
+
     console.log("[ChatGPT] Iniciando automação...");
     const result = await chrome.storage.local.get(['trelloData']);
     if (!result.trelloData) return;

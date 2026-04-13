@@ -1,5 +1,32 @@
 // popup.js
 const statusBox = document.getElementById('status');
+const toggleActive = document.getElementById('toggle-active');
+
+function setStatus(msg, type = '') {
+    statusBox.textContent = msg;
+    statusBox.className = 'status-box ' + type;
+}
+
+// Carrega o estado atual do toggle ao abrir o popup
+chrome.storage.local.get(['fazedoraActive'], (res) => {
+    toggleActive.checked = !!res.fazedoraActive;
+    updateButtonStates();
+});
+
+// Salva o estado ao mudar o toggle
+toggleActive.addEventListener('change', () => {
+    const isActive = toggleActive.checked;
+    chrome.storage.local.set({ fazedoraActive: isActive });
+    updateButtonStates();
+    setStatus(isActive ? 'Automação Ativada.' : 'Automação Desativada.', isActive ? 'success' : '');
+});
+
+function updateButtonStates() {
+    const isActive = toggleActive.checked;
+    document.querySelectorAll('.btn-all, .btn-phase').forEach(btn => {
+        btn.disabled = !isActive;
+    });
+}
 
 function setStatus(msg, type = '') {
     statusBox.textContent = msg;
