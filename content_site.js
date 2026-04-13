@@ -5,12 +5,9 @@ async function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Injeta e executa código JS no contexto real da página (MAIN WORLD)
-function executeInPage(code) {
-    const script = document.createElement('script');
-    script.textContent = code;
-    document.head.appendChild(script);
-    script.remove();
+// Pede ao background para executar código no MAIN WORLD (bypass de CSP)
+function executeInMainWorld(code) {
+    chrome.runtime.sendMessage({ action: 'execute_in_main', code });
 }
 
 async function handleLogin() {
@@ -55,32 +52,12 @@ async function handlePanel() {
 }
 
 async function handleEditor() {
-    console.log("[Site Automator] Editor detectado! Iniciando sequência...");
-    await wait(2000); // Aguarda o editor carregar
+    console.log("[Site Automator] Editor detectado! Aguardando carregar...");
+    await wait(2500);
 
-    // Chama bringlast()
-    console.log("[Site Automator] Chamando bringlast()...");
-    executeInPage('if(typeof bringlast === "function") bringlast(); else console.warn("bringlast não encontrado!");');
-    
-    await wait(1000);
-
-    // Clica em .abrirtemplate
-    const abrirBtn = document.querySelector('.abrirtemplate');
-    if (abrirBtn) {
-        console.log("[Site Automator] Clicando em .abrirtemplate...");
-        abrirBtn.click();
-    } else {
-        console.warn("[Site Automator] .abrirtemplate não encontrado.");
-    }
-
-    await wait(800);
-
-    // Chama newtemplate()
     const templateUrl = 'https://m3rsistemas.com.br/projetocontroler/templates/psiversion.txt';
-    console.log("[Site Automator] Chamando newtemplate()...");
-    executeInPage(`if(typeof newtemplate === "function") newtemplate('${templateUrl}'); else console.warn("newtemplate não encontrado!");`);
-
-    console.log("[Site Automator] Sequência do editor concluída!");
+    console.log("[Site Automator] Chamando newtemplate() via background (MAIN WORLD)...");
+    executeInMainWorld(`if(typeof newtemplate === 'function') { newtemplate('${templateUrl}'); } else { console.warn('newtemplate não encontrada.'); }`);
 }
 
 async function startSiteAutomation() {

@@ -28,15 +28,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "open_site_login") {
         let domain = message.domain;
-        // Limpa o domínio e garante o protocolo https
-        if (!domain.startsWith('http')) {
-            domain = 'https://' + domain;
-        }
-        // Remove barras no final se existirem antes de adicionar /login
+        if (!domain.startsWith('http')) domain = 'https://' + domain;
         domain = domain.replace(/\/+$/, '');
         const loginUrl = `${domain}/login`;
-        
         chrome.tabs.create({ url: loginUrl });
         console.log("Abrindo site do cliente:", loginUrl);
+    }
+
+    if (message.action === "execute_in_main") {
+        const tabId = sender.tab?.id;
+        if (!tabId) { console.error("Tab ID não disponível para execute_in_main."); return; }
+
+        const codeToRun = message.code;
+        chrome.scripting.executeScript({
+            target: { tabId: tabId },
+            world: "MAIN",
+            func: (code) => { eval(code); },
+            args: [codeToRun]
+        }).then(() => {
+            console.log("execute_in_main: código executado na aba", tabId);
+        }).catch(err => {
+            console.error("execute_in_main falhou:", err.message);
+        });
+        sendResponse({ status: "executed" });
     }
 });
