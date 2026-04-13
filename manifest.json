@@ -6,7 +6,9 @@
   "permissions": [
     "tabs",
     "storage",
-    "downloads"
+    "downloads",
+    "clipboardRead",
+    "clipboardWrite"
   ],
   "host_permissions": [
     "https://trello.com/*",
@@ -27,5 +29,11 @@
   ],
   "action": {
     "default_title": "Iniciar Automação"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["pr1.txt", "pr2.txt"],
+      "matches": ["https://chatgpt.com/*"]
+    }
+  ]
 }

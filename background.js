@@ -25,4 +25,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         sendResponse({ status: "downloads_started" });
     }
+
+    if (message.action === "open_site_login") {
+        let domain = message.domain;
+        // Limpa o domínio e garante o protocolo https
+        if (!domain.startsWith('http')) {
+            domain = 'https://' + domain;
+        }
+        // Remove barras no final se existirem antes de adicionar /login
+        domain = domain.replace(/\/+$/, '');
+        const loginUrl = `${domain}/login`;
+        
+        chrome.tabs.create({ url: loginUrl });
+        console.log("Abrindo site do cliente:", loginUrl);
+    }
 });
